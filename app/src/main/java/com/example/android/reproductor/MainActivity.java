@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -19,6 +20,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.MediaController.MediaPlayerControl;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -40,6 +42,37 @@ public class MainActivity extends Activity implements MediaPlayerControl {
     private MusicController controller;
 
     private boolean paused=false, playbackPaused=false;
+
+    /**
+     * Handles audio focus when playing a sound file
+     */
+
+    private AudioManager mAudioManager;
+
+    private AudioManager.OnAudioFocusChangeListener mOnAudioFocusChangeListener = new AudioManager.OnAudioFocusChangeListener() {
+
+
+        @Override
+        public void onAudioFocusChange(int focusChange) {
+            if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT ||
+                    focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
+                // The AUDIOFOCUS_LOSS_TRANSIENT case means that we've lost audio focus for a
+                // short amount of time. The AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK case means that
+                // our app is allowed to continue playing sound but at a lower volume. We'll treat
+                // both cases the same way because our app is playing short sound files+
+                // Pause playback and reset player to the start of the file. That way, we can
+                // play the word from the beginning when we resume playback.
+                musicSrv.pausePlayer();
+            } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+                // The AUDIOFOCUS_GAIN case means we have regained focus and can resume playback.
+                musicSrv.go();
+            } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+                // The AUDIOFOCUS_LOSS case means we've lost audio focus and
+                // Stop playback and clean up resources
+                releaseMediaPlayer();
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +102,7 @@ public class MainActivity extends Activity implements MediaPlayerControl {
 
         getSongList();
 
-        //Ordenamos las canciones por título// Mejor por Artista??
+        //Ordenamos las canciones por Artista
         Collections.sort(songList, new Comparator<song>() {
             public int compare(song a, song b) {
                 return a.getArtist().compareTo(b.getArtist());
@@ -131,6 +164,7 @@ public class MainActivity extends Activity implements MediaPlayerControl {
 
     @Override
     public void onStart() {
+
         super.onStart();
         if (playIntent == null) {
             playIntent = new Intent(this, MusicService.class);
@@ -315,5 +349,25 @@ public class MainActivity extends Activity implements MediaPlayerControl {
     protected void onStop() {
         controller.hide();
         super.onStop();
+    }
+
+    /**
+     * Clean up the media player by releasing its resources.
+     */
+    public void releaseMediaPlayer() {
+        // If the media player is not null, then it may be currently playing a sound.
+        if (musicSrv != null) {
+            // Regardless of the current state of the media player, release its resources
+            // because we no longer need it.
+            musicSrv.release();
+            // Set the media player back to null. For our code, we've decided that
+            // setting the media player to null is an easy way to tell that the media player
+            // is not configured to play an audio file at the moment.
+            musicSrv = null;
+            // Regardless of whether or not we were granted audio focus, abandon it. This also
+            // unregisters the AudioFocusChangeListener so we don't get anymore callbacks.
+            mAudioManager.abandonAudioFocus(mOnAudioFocusChangeListener);
+        }
+
     }
 }

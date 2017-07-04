@@ -67,7 +67,8 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
                 .setSmallIcon(R.drawable.android_music_player_play)
                 .setTicker(songTitle)
                 .setOngoing(true)
-                .setContentTitle(getResources().getString(R.string.playing)).setContentText(songTitle);
+                .setContentTitle(getResources().getString(R.string.playing))
+                .setContentText(songTitle);
         Notification not = builder.build();
 
         startForeground(NOTIFY_ID, not);
@@ -219,5 +220,9 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     public void setShuffle(){
         if(shuffle) shuffle=false;
         else shuffle=true;
+    }
+
+    public void release(){
+        player.release();
     }
 }
