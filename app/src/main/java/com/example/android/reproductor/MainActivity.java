@@ -1,6 +1,5 @@
 package com.example.android.reproductor;
 
-
 import android.Manifest;
 import android.app.Activity;
 import android.content.ComponentName;
@@ -10,17 +9,16 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.MediaController.MediaPlayerControl;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -33,8 +31,6 @@ public class MainActivity extends Activity implements MediaPlayerControl {
 
     ListView songView;
 
-    private MediaPlayer mp = new MediaPlayer();
-
     private MusicService musicSrv;
 
     private Intent playIntent;
@@ -42,6 +38,8 @@ public class MainActivity extends Activity implements MediaPlayerControl {
     private boolean musicBound = false;
 
     private MusicController controller;
+
+    private boolean paused=false, playbackPaused=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,9 +92,9 @@ public class MainActivity extends Activity implements MediaPlayerControl {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
-            //get service
+            //Obtener el servicio
             musicSrv = binder.getService();
-            //pass list
+            //pasar lista de canciones
             musicSrv.setList(songList);
             musicBound = true;
         }
@@ -143,6 +141,7 @@ public class MainActivity extends Activity implements MediaPlayerControl {
 
     @Override
     public void pause() {
+        playbackPaused=true;
         musicSrv.pausePlayer();
     }
 
@@ -225,12 +224,15 @@ public class MainActivity extends Activity implements MediaPlayerControl {
                     (android.provider.MediaStore.Audio.Media._ID); //ID de la canción
             int artistColumn = musicCursor.getColumnIndex
                     (android.provider.MediaStore.Audio.Media.ARTIST); //Artista
+            int album = musicCursor.getColumnIndex //Foto del album
+                    (MediaStore.Audio.Albums.ALBUM_ART);
             //Añadimos canciones a la lista
             do { // pasamos a String los datos que hemos obtenido justo arriba
                 long thisId = musicCursor.getLong(idColumn);
                 String thisTitle = musicCursor.getString(titleColumn);
                 String thisArtist = musicCursor.getString(artistColumn);
-                songList.add(new song(thisId, thisTitle, thisArtist));  //añadimos la canción a la lista
+                String thisAlbum = musicCursor.getString(album);
+                songList.add(new song(thisId, thisTitle, thisArtist,thisAlbum));  //añadimos la canción a la lista
             }
             while (musicCursor.moveToNext()); //Mientras que haya canciones volveremos a ejecutar el bucle
         }
@@ -241,6 +243,11 @@ public class MainActivity extends Activity implements MediaPlayerControl {
         Log.e(view.getTag().toString(), "view.getTag().toString()");
         musicSrv.setSong(Integer.parseInt(view.getTag().toString()));
         musicSrv.playSong();
+        if(playbackPaused){
+            setController();
+            playbackPaused=false;
+        }
+        controller.show(0);
     }
 
     @Override
@@ -248,14 +255,15 @@ public class MainActivity extends Activity implements MediaPlayerControl {
         //Menú de selección
 
         switch (item.getItemId()) {
-            case R.id.action_shuffle:
-                //shuffle
+            case R.id.action_shuffle: //Modo aleatorio
+                musicSrv.setShuffle();
                 break;
-            case R.id.action_end:
+            case R.id.action_end: //Parar la reproducción
                 stopService(playIntent);
                 musicSrv = null;
                 System.exit(0);
                 break;
+
         }
         return super.onOptionsItemSelected(item);
     }
@@ -271,12 +279,41 @@ public class MainActivity extends Activity implements MediaPlayerControl {
     //Reproducir la siguiente
     private void playNext() {
         musicSrv.playNext();
+        if(playbackPaused){
+            setController();
+            playbackPaused=false;
+        }
         controller.show(0);
     }
 
     //Reproducir la anterior
     private void playPrev() {
         musicSrv.playPrev();
+        if(playbackPaused){
+            setController();
+            playbackPaused=false;
+        }
         controller.show(0);
+    }
+
+    @Override
+    protected void onPause(){
+        super.onPause();
+        paused=true;
+    }
+
+    @Override
+    protected void onResume(){//Para reiniciar la reproducción
+        super.onResume();
+        if(paused){
+            setController();
+            paused=false;
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        controller.hide();
+        super.onStop();
     }
 }

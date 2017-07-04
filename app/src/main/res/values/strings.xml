@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">Reproductor</string>
+    <string name="app_name">Play Music</string>
+
+    <string name="playing">Playing</string>
 </resources>

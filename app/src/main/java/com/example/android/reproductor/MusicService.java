@@ -1,5 +1,7 @@
 package com.example.android.reproductor;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ContentUris;
 import android.content.Intent;
@@ -12,6 +14,7 @@ import android.os.PowerManager;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * Created by jesus on 27/06/17.
@@ -19,6 +22,14 @@ import java.util.ArrayList;
 
 public class MusicService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
         MediaPlayer.OnCompletionListener {
+
+    //Para modo aleatorio
+    private boolean shuffle=false;
+    private Random rand;
+
+    //Título canción
+    private String songTitle="";
+    private static final int NOTIFY_ID=1;
 
     //media player
     private MediaPlayer player;
@@ -39,6 +50,27 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
         //Iniciamos el reproductor
         initMusicPlayer();
+
+        //Variable aleatoria para el modo aleatorio
+        rand=new Random();
+
+
+        //Devolver al usuario a la main activity
+        Intent notIntent = new Intent(this, MainActivity.class);
+        notIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pendInt = PendingIntent.getActivity(this, 0,
+                notIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        Notification.Builder builder = new Notification.Builder(this);
+
+        builder.setContentIntent(pendInt)
+                .setSmallIcon(R.drawable.android_music_player_play)
+                .setTicker(songTitle)
+                .setOngoing(true)
+                .setContentTitle(getResources().getString(R.string.playing)).setContentText(songTitle);
+        Notification not = builder.build();
+
+        startForeground(NOTIFY_ID, not);
     }
 
 
@@ -85,6 +117,8 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
         //Obtener la canción
         song playSong = songs.get(songPosn);
+        //Obtener el título de la canción
+        songTitle=playSong.getTitle();
         //Obtener el ID
         long currSong = playSong.getID();
         //Obtener el Uri de la canción (almacenada en la memoria externa).
@@ -103,12 +137,15 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     @Override
     public void onCompletion(MediaPlayer mp) {
-
-
+        if(player.getCurrentPosition()!=0){
+            mp.reset();
+            playNext();
+        }
     }
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
+        mp.reset();
         return false;
     }
 
@@ -127,6 +164,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     //Metodo para ir a la canción anterior
     public void playPrev(){
         songPosn--;
+
         //No saltar si es la primera canción
         if(songPosn==0) songPosn=songs.size()-1;
         playSong();
@@ -134,9 +172,17 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     //Método para saltar a la canción siguiente
     public void playNext(){
-        songPosn++;
-        //No saltar si es la última posición
-        if(songPosn == songs.size()) songPosn=0;
+        if(shuffle /*Si el modo aleatorio está encendido*/){
+            int newSong = songPosn;
+            while(newSong==songPosn){
+                newSong=rand.nextInt(songs.size());
+            }
+            songPosn=newSong;
+        }
+        else{
+            songPosn++;
+            if(songPosn == songs.size()) songPosn=0;
+        }
         playSong();
     }
 
@@ -163,5 +209,15 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     public void go(){
         player.start();
+    }
+
+    @Override
+    public void onDestroy() {
+        stopForeground(true);
+    }
+
+    public void setShuffle(){
+        if(shuffle) shuffle=false;
+        else shuffle=true;
     }
 }
