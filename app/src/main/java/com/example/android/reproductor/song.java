@@ -11,6 +11,7 @@ import android.media.MediaMetadataRetriever;
 public class song {
 
     private long id;
+
     private String title;
 
     private String artist;
@@ -27,15 +28,7 @@ public class song {
         fotoDisco = mr;
     }
 
-    public song(long songID, String songTitle, String songArtist) {
-        id=songID;
-        title=songTitle;
-        artist=songArtist;
-    }
-
-
-
-    //Métodos que devuelven metadatos de las canciones.
+   //Métodos que devuelven metadatos de las canciones.
 
     public long getID(){return id;}
     public String getTitle(){return title;}

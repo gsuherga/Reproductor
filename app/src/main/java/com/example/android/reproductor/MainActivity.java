@@ -32,10 +32,6 @@ public class MainActivity extends Activity implements MediaPlayerControl {
 
     ArrayList<song> songList = new ArrayList<>();
 
-    ArrayList<song> fotoDisco = new ArrayList<>();
-
-    String album_Id;
-
     ListView songView;
 
     private MusicService musicSrv;
@@ -261,11 +257,10 @@ public class MainActivity extends Activity implements MediaPlayerControl {
                 (android.provider.MediaStore.Audio.Media._ID); //ID de la canción
         int artistColumn = musicCursor.getColumnIndex
                 (android.provider.MediaStore.Audio.Media.ARTIST); //Artista
+
         int album_data = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA); //Datos del album
 
-        MediaMetadataRetriever mr = new MediaMetadataRetriever(); //Obtener metadatos
-
-        byte picture [] = null;
+        MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever(); //Obtener metadatos
 
         try {
             musicCursor.moveToFirst();
@@ -277,9 +272,10 @@ public class MainActivity extends Activity implements MediaPlayerControl {
                 // String thisAlbum = musicCursor.getString(album); //Esto es para obtener el título del album, no la foto
                 String thisData = musicCursor.getString(album_data);
 
-                mr.setDataSource(thisData);
+                metadataRetriever.setDataSource(thisData);
 
-                songList.add(new song(thisId, thisTitle, thisArtist, mr));
+                songList.add(new song(thisId, thisTitle, thisArtist, metadataRetriever));
+
                 //añadimos la canción a la lista
             }
             while (musicCursor.moveToNext()); //Mientras que haya canciones volveremos a ejecutar el bucle
@@ -291,9 +287,8 @@ public class MainActivity extends Activity implements MediaPlayerControl {
                 String thisTitle = musicCursor.getString(R.string.unknown);
                 String thisArtist = musicCursor.getString(R.string.unknown);
                 String thisData = musicCursor.getString(album_data);
-                mr.setDataSource(thisData);
-                picture = mr.getEmbeddedPicture();
-                songList.add(new song(thisId, thisTitle, thisArtist, mr)); //añadimos la canción a la lista
+                metadataRetriever.setDataSource(thisData);
+                songList.add(new song(thisId, thisTitle, thisArtist, metadataRetriever)); //añadimos la canción a la lista
             } while (musicCursor.moveToNext());
         }musicCursor.moveToFirst();
 
