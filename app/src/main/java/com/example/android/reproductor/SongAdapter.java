@@ -16,14 +16,14 @@ import java.util.ArrayList;
  * Created by jesus on 21/06/17.
  */
 
-public class SongAdapter extends BaseAdapter{
+public class SongAdapter extends BaseAdapter {
 
     private ArrayList<song> songs;
     private LayoutInflater songInf;
 
-    public SongAdapter(Context c, ArrayList<song> theSongs){
-        songs=theSongs;
-        songInf=LayoutInflater.from(c);
+    public SongAdapter(Context c, ArrayList<song> theSongs) {
+        songs = theSongs;
+        songInf = LayoutInflater.from(c);
     }
 
     @Override
@@ -44,11 +44,11 @@ public class SongAdapter extends BaseAdapter{
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         //mapa para inflar el layout de las canciones
-        LinearLayout songLay = (LinearLayout)songInf.inflate
+        LinearLayout songLay = (LinearLayout) songInf.inflate
                 (R.layout.song, parent, false);
         //obtenemos el título, el artista, y la foto del albúm
-        TextView songView = (TextView)songLay.findViewById(R.id.song_title);
-        TextView artistView = (TextView)songLay.findViewById(R.id.song_artist);
+        TextView songView = (TextView) songLay.findViewById(R.id.song_title);
+        TextView artistView = (TextView) songLay.findViewById(R.id.song_artist);
         ImageView coverArt = (ImageView) songLay.findViewById(R.id.album);
         //la canción según la posición del adapter
         song currSong = songs.get(position);
@@ -56,12 +56,14 @@ public class SongAdapter extends BaseAdapter{
         songView.setText(currSong.getTitle());
         artistView.setText(currSong.getArtist());
 
-        byte [] picture = currSong.getMediaMetaData().getEmbeddedPicture();
+        // array para meter los metadatos y extraer de ahí las fotos del album.
+        byte[] picture = currSong.getMediaMetaData().getEmbeddedPicture();
 
         try {
-            coverArt.setImageBitmap((BitmapFactory.decodeByteArray(picture, 0,picture.length)));
-        } catch (Exception e){
-
+            //si hay foto, ponerla
+            coverArt.setImageBitmap((BitmapFactory.decodeByteArray(picture, 0, picture.length)));
+        } catch (Exception e) {
+            //si no hay foto, poner la foto del vinilo por defecto
             coverArt.setImageResource(R.drawable.vinilo);
         }
         //establecemos como equiteta según la posición en el adapter
