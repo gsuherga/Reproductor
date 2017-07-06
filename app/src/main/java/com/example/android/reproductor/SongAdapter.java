@@ -1,8 +1,6 @@
 package com.example.android.reproductor;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,14 +48,19 @@ public class SongAdapter extends BaseAdapter{
         //obtenemos el título, el artista, y la foto del albúm
         TextView songView = (TextView)songLay.findViewById(R.id.song_title);
         TextView artistView = (TextView)songLay.findViewById(R.id.song_artist);
-        ImageView AlbumView = (ImageView) songLay.findViewById(R.id.album);
+        ImageView coverArt = (ImageView) songLay.findViewById(R.id.album);
         //la canción según la posición del adapter
         song currSong = songs.get(position);
         //título de la canción, el artista y el album
         songView.setText(currSong.getTitle());
         artistView.setText(currSong.getArtist());
-        Bitmap bm= BitmapFactory.decodeFile(currSong.getPictureAlbum());
-        AlbumView.setImageBitmap(bm);
+
+        if(currSong.haspicture()){
+            coverArt.setImageBitmap(currSong.getBitmap());
+        }else {
+            coverArt.setImageResource(R.drawable.vinilo);
+        }
+
         //establecemos como equiteta según la posición en el adapter
         songLay.setTag(position);
         return songLay;

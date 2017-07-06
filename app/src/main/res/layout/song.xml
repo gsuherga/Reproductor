@@ -9,13 +9,16 @@
     <ImageView
         android:id="@+id/album"
         android:layout_width="88dp"
-        android:layout_height="88dp" />
+        android:layout_height="88dp"
+        android:scaleType="fitXY"/>
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_weight="2"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingLeft="8dp"
+        android:paddingStart="8dp">
 
     <TextView
         android:id="@+id/song_title"

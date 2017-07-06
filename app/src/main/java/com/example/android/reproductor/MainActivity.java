@@ -4,11 +4,14 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
@@ -21,6 +24,7 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.MediaController.MediaPlayerControl;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -30,6 +34,8 @@ import java.util.Comparator;
 public class MainActivity extends Activity implements MediaPlayerControl {
 
     ArrayList<song> songList = new ArrayList<>();
+
+    ArrayList<song> fotoDisco = new ArrayList<>();
 
     ListView songView;
 
@@ -41,7 +47,7 @@ public class MainActivity extends Activity implements MediaPlayerControl {
 
     private MusicController controller;
 
-    private boolean paused=false, playbackPaused=false;
+    private boolean paused = false, playbackPaused = false;
 
     /**
      * Handles audio focus when playing a sound file
@@ -175,7 +181,7 @@ public class MainActivity extends Activity implements MediaPlayerControl {
 
     @Override
     public void pause() {
-        playbackPaused=true;
+        playbackPaused = true;
         musicSrv.pausePlayer();
     }
 
@@ -247,29 +253,64 @@ public class MainActivity extends Activity implements MediaPlayerControl {
         ContentResolver musicResolver = getContentResolver();
         Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         Cursor musicCursor = musicResolver.query(musicUri, null, null, null, null);
-
         //Usando el cursor vamos añadiendo las canciones que haya en el teléfono
 
-        if (musicCursor != null && musicCursor.moveToFirst()) {
-            //Obtenemos los datos desde los archivos
-            int titleColumn = musicCursor.getColumnIndex
-                    (android.provider.MediaStore.Audio.Media.TITLE); //Título de la canción
-            int idColumn = musicCursor.getColumnIndex
-                    (android.provider.MediaStore.Audio.Media._ID); //ID de la canción
-            int artistColumn = musicCursor.getColumnIndex
-                    (android.provider.MediaStore.Audio.Media.ARTIST); //Artista
-            int album = musicCursor.getColumnIndex //Foto del album
-                    (MediaStore.Audio.Albums.ALBUM_ART);
+        //Obtenemos los datos desde los archivos
+        int titleColumn = musicCursor.getColumnIndex
+                (android.provider.MediaStore.Audio.Media.TITLE); //Título de la canción
+        int idColumn = musicCursor.getColumnIndex
+                (android.provider.MediaStore.Audio.Media._ID); //ID de la canción
+        int artistColumn = musicCursor.getColumnIndex
+                (android.provider.MediaStore.Audio.Media.ARTIST); //Artista
+        // int album = musicCursor.getColumnIndex //Nombre Album
+        //       (MediaStore.Audio.Media.);
+
+        try {
+            musicCursor.moveToFirst();
             //Añadimos canciones a la lista
             do { // pasamos a String los datos que hemos obtenido justo arriba
                 long thisId = musicCursor.getLong(idColumn);
                 String thisTitle = musicCursor.getString(titleColumn);
                 String thisArtist = musicCursor.getString(artistColumn);
-                String thisAlbum = musicCursor.getString(album);
-                songList.add(new song(thisId, thisTitle, thisArtist,thisAlbum));  //añadimos la canción a la lista
+                // String thisAlbum = musicCursor.getString(album); //Esto es para obtener el título del album, no la foto
+                songList.add(new song(thisId, thisTitle, thisArtist)); //añadimos la canción a la lista
             }
             while (musicCursor.moveToNext()); //Mientras que haya canciones volveremos a ejecutar el bucle
+        } catch (Exception e) {
+
+            //Añadimos canciones a la lista
+            do { // pasamos a String los datos que hemos obtenido justo arriba
+                long thisId = musicCursor.getLong(idColumn);
+                String thisTitle = musicCursor.getString(R.string.unknown);
+                String thisArtist = musicCursor.getString(R.string.unknown);
+                songList.add(new song(thisId, thisTitle, thisArtist)); //añadimos la canción a la lista
+            } while (musicCursor.moveToNext());
         }
+        musicCursor.moveToFirst();
+
+        int album_id = musicCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
+
+        Uri sArtworkUri = Uri.parse("content://media/external/audio/albumart");
+        Uri uri = ContentUris.withAppendedId(sArtworkUri, album_id);
+        ContentResolver res = this.getContentResolver();
+        InputStream in;
+        Bitmap artwork;
+
+        do {
+            try {
+                in = res.openInputStream(uri);
+            } catch (Exception e) {
+                in = null;
+            }
+            if (in != null) {
+                artwork = BitmapFactory.decodeStream(in);
+            } else {
+                artwork = null;
+            }
+            if (artwork != null) {
+                fotoDisco.add(new song(artwork));
+            }
+        }while (musicCursor.moveToNext());
         musicCursor.close();
     }
 
@@ -277,9 +318,9 @@ public class MainActivity extends Activity implements MediaPlayerControl {
         Log.e(view.getTag().toString(), "view.getTag().toString()");
         musicSrv.setSong(Integer.parseInt(view.getTag().toString()));
         musicSrv.playSong();
-        if(playbackPaused){
+        if (playbackPaused) {
             setController();
-            playbackPaused=false;
+            playbackPaused = false;
         }
         controller.show(0);
     }
@@ -313,9 +354,9 @@ public class MainActivity extends Activity implements MediaPlayerControl {
     //Reproducir la siguiente
     private void playNext() {
         musicSrv.playNext();
-        if(playbackPaused){
+        if (playbackPaused) {
             setController();
-            playbackPaused=false;
+            playbackPaused = false;
         }
         controller.show(0);
     }
@@ -323,25 +364,25 @@ public class MainActivity extends Activity implements MediaPlayerControl {
     //Reproducir la anterior
     private void playPrev() {
         musicSrv.playPrev();
-        if(playbackPaused){
+        if (playbackPaused) {
             setController();
-            playbackPaused=false;
+            playbackPaused = false;
         }
         controller.show(0);
     }
 
     @Override
-    protected void onPause(){
+    protected void onPause() {
         super.onPause();
-        paused=true;
+        paused = true;
     }
 
     @Override
-    protected void onResume(){//Para reiniciar la reproducción
+    protected void onResume() {//Para reiniciar la reproducción
         super.onResume();
-        if(paused){
+        if (paused) {
             setController();
-            paused=false;
+            paused = false;
         }
     }
 
