@@ -1,6 +1,7 @@
 package com.example.android.reproductor;
 
 import android.content.Context;
+import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -55,12 +56,14 @@ public class SongAdapter extends BaseAdapter{
         songView.setText(currSong.getTitle());
         artistView.setText(currSong.getArtist());
 
-        if(currSong.haspicture()){
-            coverArt.setImageBitmap(currSong.getBitmap());
-        }else {
+        byte [] picture = currSong.getMediaMetaData().getEmbeddedPicture();
+
+        try {
+            coverArt.setImageBitmap((BitmapFactory.decodeByteArray(picture, 0,picture.length)));
+        } catch (Exception e){
+
             coverArt.setImageResource(R.drawable.vinilo);
         }
-
         //establecemos como equiteta según la posición en el adapter
         songLay.setTag(position);
         return songLay;

@@ -4,15 +4,13 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.AudioManager;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -24,7 +22,6 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.MediaController.MediaPlayerControl;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -36,6 +33,8 @@ public class MainActivity extends Activity implements MediaPlayerControl {
     ArrayList<song> songList = new ArrayList<>();
 
     ArrayList<song> fotoDisco = new ArrayList<>();
+
+    String album_Id;
 
     ListView songView;
 
@@ -262,8 +261,11 @@ public class MainActivity extends Activity implements MediaPlayerControl {
                 (android.provider.MediaStore.Audio.Media._ID); //ID de la canción
         int artistColumn = musicCursor.getColumnIndex
                 (android.provider.MediaStore.Audio.Media.ARTIST); //Artista
-        // int album = musicCursor.getColumnIndex //Nombre Album
-        //       (MediaStore.Audio.Media.);
+        int album_data = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA); //Datos del album
+
+        MediaMetadataRetriever mr = new MediaMetadataRetriever(); //Obtener metadatos
+
+        byte picture [] = null;
 
         try {
             musicCursor.moveToFirst();
@@ -273,7 +275,12 @@ public class MainActivity extends Activity implements MediaPlayerControl {
                 String thisTitle = musicCursor.getString(titleColumn);
                 String thisArtist = musicCursor.getString(artistColumn);
                 // String thisAlbum = musicCursor.getString(album); //Esto es para obtener el título del album, no la foto
-                songList.add(new song(thisId, thisTitle, thisArtist)); //añadimos la canción a la lista
+                String thisData = musicCursor.getString(album_data);
+
+                mr.setDataSource(thisData);
+
+                songList.add(new song(thisId, thisTitle, thisArtist, mr));
+                //añadimos la canción a la lista
             }
             while (musicCursor.moveToNext()); //Mientras que haya canciones volveremos a ejecutar el bucle
         } catch (Exception e) {
@@ -283,34 +290,13 @@ public class MainActivity extends Activity implements MediaPlayerControl {
                 long thisId = musicCursor.getLong(idColumn);
                 String thisTitle = musicCursor.getString(R.string.unknown);
                 String thisArtist = musicCursor.getString(R.string.unknown);
-                songList.add(new song(thisId, thisTitle, thisArtist)); //añadimos la canción a la lista
+                String thisData = musicCursor.getString(album_data);
+                mr.setDataSource(thisData);
+                picture = mr.getEmbeddedPicture();
+                songList.add(new song(thisId, thisTitle, thisArtist, mr)); //añadimos la canción a la lista
             } while (musicCursor.moveToNext());
-        }
-        musicCursor.moveToFirst();
+        }musicCursor.moveToFirst();
 
-        int album_id = musicCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
-
-        Uri sArtworkUri = Uri.parse("content://media/external/audio/albumart");
-        Uri uri = ContentUris.withAppendedId(sArtworkUri, album_id);
-        ContentResolver res = this.getContentResolver();
-        InputStream in;
-        Bitmap artwork;
-
-        do {
-            try {
-                in = res.openInputStream(uri);
-            } catch (Exception e) {
-                in = null;
-            }
-            if (in != null) {
-                artwork = BitmapFactory.decodeStream(in);
-            } else {
-                artwork = null;
-            }
-            if (artwork != null) {
-                fotoDisco.add(new song(artwork));
-            }
-        }while (musicCursor.moveToNext());
         musicCursor.close();
     }
 
