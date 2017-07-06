@@ -260,7 +260,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         int artistColumn = musicCursor.getColumnIndex
                 (android.provider.MediaStore.Audio.Media.ARTIST); //Artista
 
-        int album_data = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA ); //Datos del album
+        int album_data = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA); //Datos del album
 
         MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever(); //Obtener metadatos
 
