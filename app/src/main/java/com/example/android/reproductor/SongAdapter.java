@@ -59,7 +59,7 @@ public class SongAdapter extends BaseAdapter {
         songView.setText(currSong.getTitle());
         artistView.setText(currSong.getArtist());
 
-        try {
+        if (currSong.getMediaMetaData() != null){
         DownloadImages downloadImages = new DownloadImages();
         downloadImages.execute(currSong.getMediaMetaData());
 
@@ -71,7 +71,7 @@ public class SongAdapter extends BaseAdapter {
                         .into(coverArt);
             }
         });
-        } catch (Exception e) {
+        } else {
             //si no hay foto, poner la foto del vinilo por defecto
             coverArt.setImageResource(R.drawable.vinilo);
         }

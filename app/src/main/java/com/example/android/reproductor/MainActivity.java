@@ -1,7 +1,6 @@
 package com.example.android.reproductor;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -16,7 +15,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.MediaStore;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
@@ -28,7 +30,7 @@ import java.util.Comparator;
 
 //Implementamos la clase MediaController para poder así reproducir los archivos de música
 
-public class MainActivity extends Activity implements MediaPlayerControl {
+public class MainActivity extends AppCompatActivity implements MediaPlayerControl {
 
     ArrayList<song> songList = new ArrayList<>();
 
@@ -262,8 +264,7 @@ public class MainActivity extends Activity implements MediaPlayerControl {
 
         MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever(); //Obtener metadatos
 
-        try {
-            musicCursor.moveToFirst();
+        if(musicCursor!=null && musicCursor.moveToFirst()){
             //Añadimos canciones a la lista
             do { // pasamos a String los datos que hemos obtenido justo arriba
                 long thisId = musicCursor.getLong(idColumn);
@@ -271,26 +272,13 @@ public class MainActivity extends Activity implements MediaPlayerControl {
                 String thisArtist = musicCursor.getString(artistColumn);
                 // String thisAlbum = musicCursor.getString(album); //Esto es para obtener el título del album, no la foto
                 String thisData = musicCursor.getString(album_data);
-
                 metadataRetriever.setDataSource(thisData);
-
                 songList.add(new song(thisId, thisTitle, thisArtist, metadataRetriever));
 
                 //añadimos la canción a la lista
-            }
-            while (musicCursor.moveToNext()); //Mientras que haya canciones volveremos a ejecutar el bucle
-        } catch (Exception e) {
+            } while (musicCursor.moveToNext()); //Mientras que haya canciones volveremos a ejecutar el bucle
 
-            //Añadimos canciones a la lista
-            do { // pasamos a String los datos que hemos obtenido justo arriba
-                long thisId = musicCursor.getLong(idColumn);
-                String thisTitle = musicCursor.getString(R.string.unknown);
-                String thisArtist = musicCursor.getString(R.string.unknown);
-                String thisData = musicCursor.getString(album_data);
-                metadataRetriever.setDataSource(thisData);
-                songList.add(new song(thisId, thisTitle, thisArtist, metadataRetriever)); //añadimos la canción a la lista
-            } while (musicCursor.moveToNext());
-        }musicCursor.moveToFirst();
+        }
 
         musicCursor.close();
     }
@@ -304,6 +292,13 @@ public class MainActivity extends Activity implements MediaPlayerControl {
             playbackPaused = false;
         }
         controller.show(0);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+        return true;
     }
 
     @Override

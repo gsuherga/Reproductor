@@ -21,7 +21,7 @@ public class song {
 
     //Creamos un método para así poder extraer luego los metadatos de las canciones
 
-    public song (long songID, String songTitle, String songArtist, MediaMetadataRetriever mr) {
+        public song (long songID, String songTitle, String songArtist, MediaMetadataRetriever mr) {
         id=songID;
         title=songTitle;
         artist=songArtist;
