@@ -1,6 +1,8 @@
 package com.example.android.reproductor;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.os.AsyncTask;
 import android.view.LayoutInflater;
@@ -11,8 +13,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
-
 import java.util.ArrayList;
 
 /**
@@ -21,10 +21,10 @@ import java.util.ArrayList;
 
 public class SongAdapter extends BaseAdapter {
 
-    private ArrayList<song> songs;
+    private ArrayList<Song> songs;
     private LayoutInflater songInf;
 
-    public SongAdapter(Context c, ArrayList<song> theSongs) {
+    public SongAdapter(Context c, ArrayList<Song> theSongs) {
         songs = theSongs;
         songInf = LayoutInflater.from(c);
     }
@@ -54,27 +54,30 @@ public class SongAdapter extends BaseAdapter {
         TextView artistView = (TextView) songLay.findViewById(R.id.song_artist);
         final ImageView coverArt = (ImageView) songLay.findViewById(R.id.album);
         //la canción según la posición del adapter
-        song currSong = songs.get(position);
+        Song currSong = songs.get(position);
         //título de la canción, el artista y el album
         songView.setText(currSong.getTitle());
         artistView.setText(currSong.getArtist());
 
-        if (currSong.getMediaMetaData() != null){
-        DownloadImages downloadImages = new DownloadImages();
-        downloadImages.execute(currSong.getMediaMetaData());
 
-        downloadImages.setFinishedDownload(new finishedInterface() {
-            @Override
-            public void getBitmap(byte[] bitmap) {
-                Glide.with(coverArt.getContext())
-                        .load(bitmap)
-                        .into(coverArt);
-            }
-        });
-        } else {
-            //si no hay foto, poner la foto del vinilo por defecto
-            coverArt.setImageResource(R.drawable.vinilo);
+        final MediaMetadataRetriever mdata = new MediaMetadataRetriever();
+
+        mdata.setDataSource(currSong.getData());
+
+        byte [] data = mdata.getEmbeddedPicture();
+
+
+        if(data != null) {
+            Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+            coverArt.setImageBitmap(bitmap); //associated cover art in bitmap
+            coverArt.setAdjustViewBounds(true);
+        }else  {
+            coverArt.setImageResource(R.drawable.vinilo); //any default cover resourse folder
+            coverArt.setAdjustViewBounds(true);
         }
+
+
+
         //establecemos como equiteta según la posición en el adapter
         songLay.setTag(position);
         return songLay;

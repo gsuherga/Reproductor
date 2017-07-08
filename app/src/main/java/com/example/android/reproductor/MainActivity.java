@@ -16,11 +16,11 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.MediaController.MediaPlayerControl;
 
@@ -32,7 +32,7 @@ import java.util.Comparator;
 
 public class MainActivity extends AppCompatActivity implements MediaPlayerControl {
 
-    ArrayList<song> songList = new ArrayList<>();
+    ArrayList<Song> songList = new ArrayList<>();
 
     ListView songView;
 
@@ -46,11 +46,15 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
     private boolean paused = false, playbackPaused = false;
 
+    Song song;
+
     /**
      * Handles audio focus when playing a sound file
      */
 
-    private AudioManager mAudioManager;
+    private AudioManager mAudioManager; //Variable de enlace con el audiofocus
+
+    Context context; //Contexto para pasar al audiofocus
 
     private AudioManager.OnAudioFocusChangeListener mOnAudioFocusChangeListener = new AudioManager.OnAudioFocusChangeListener() {
 
@@ -61,14 +65,11 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                     focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
                 // The AUDIOFOCUS_LOSS_TRANSIENT case means that we've lost audio focus for a
                 // short amount of time. The AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK case means that
-                // our app is allowed to continue playing sound but at a lower volume. We'll treat
-                // both cases the same way because our app is playing short sound files+
-                // Pause playback and reset player to the start of the file. That way, we can
-                // play the word from the beginning when we resume playback.
-                musicSrv.pausePlayer();
+                // our app is allowed to continue playing sound but at a lower volume.
+                pause();
             } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
                 // The AUDIOFOCUS_GAIN case means we have regained focus and can resume playback.
-                musicSrv.go();
+              onResume();
             } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
                 // The AUDIOFOCUS_LOSS case means we've lost audio focus and
                 // Stop playback and clean up resources
@@ -106,8 +107,8 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         getSongList();
 
         //Ordenamos las canciones por Artista
-        Collections.sort(songList, new Comparator<song>() {
-            public int compare(song a, song b) {
+        Collections.sort(songList, new Comparator<Song>() {
+            public int compare(Song a, Song b) {
                 return a.getArtist().compareTo(b.getArtist());
             }
         });
@@ -116,9 +117,54 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         SongAdapter songAdt = new SongAdapter(this, songList);
         songView.setAdapter(songAdt);
 
-        //establecemos el controlador (método setController)
-        setController();
 
+        //Contexto para luego pasarlo al audiofocus
+        context=this;
+
+
+
+        songView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                //Creamos un enlace para requerir el audiofocus
+
+                mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+
+                song = songList.get(position); //La posición nos dice la canción escogida
+
+                musicSrv.setSong(song, position); //Establecemos la canción y el music service sabe ir a la anterior y la posterior.
+
+                // Requerimos el audiofocus para poder reproducir la canción si podemos
+
+                int result = mAudioManager.requestAudioFocus(mOnAudioFocusChangeListener,
+                        AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+
+                if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+
+                    //Obtenos audiofocus, por tanto reproducimos la canción
+
+                    songPicked(song);
+                }
+
+            }
+        });
+
+        //establecemos el controlador (método setController)
+
+        setController();
+    }
+
+    public void songPicked(Song song) {
+      //  Log.e(view.getTag().toString(), "view.getTag().toString()")
+        // musicSrv.setSong(Integer.parseInt(song.getID()));
+        musicSrv.playSong(song);
+
+        if (playbackPaused) {
+            setController();
+            playbackPaused = false;
+        }
+        controller.show(0);
     }
 
     //Conectamos con el servicio para conseguir la música (musicService).
@@ -128,7 +174,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
-            //Obtener el servicio
+            //Obtener el servicio.
             musicSrv = binder.getService();
             //pasar lista de canciones
             musicSrv.setList(songList);
@@ -245,7 +291,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     }
 
     public void getSongList() {
-        //retrieve song info
+        //retrieve Song info
 
         ContentResolver musicResolver = getContentResolver();
         Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
@@ -273,7 +319,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                 // String thisAlbum = musicCursor.getString(album); //Esto es para obtener el título del album, no la foto
                 String thisData = musicCursor.getString(album_data);
                 metadataRetriever.setDataSource(thisData);
-                songList.add(new song(thisId, thisTitle, thisArtist, metadataRetriever));
+                songList.add(new Song(thisId, thisTitle, thisArtist, thisData));
 
                 //añadimos la canción a la lista
             } while (musicCursor.moveToNext()); //Mientras que haya canciones volveremos a ejecutar el bucle
@@ -283,16 +329,6 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         musicCursor.close();
     }
 
-    public void songPicked(View view) {
-        Log.e(view.getTag().toString(), "view.getTag().toString()");
-        musicSrv.setSong(Integer.parseInt(view.getTag().toString()));
-        musicSrv.playSong();
-        if (playbackPaused) {
-            setController();
-            playbackPaused = false;
-        }
-        controller.show(0);
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

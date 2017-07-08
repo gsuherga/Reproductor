@@ -2,4 +2,7 @@
 <resources>
     <string name="app_name">Reproductor</string>
     <string name="playing">Reproduciendo</string>
+    <string name="end">Salir</string>
+    <string name="shuffle">Aleatorio</string>
+    <string name="unknown">Desconocido</string>
 </resources>
