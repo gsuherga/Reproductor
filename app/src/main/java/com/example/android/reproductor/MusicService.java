@@ -162,7 +162,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     }
 
-    public void setSong(Song currentSong, int songIndex){
+    public void setSong(Song currentSong, long songIndex){
 
         songPosn = (long) songIndex;
         currSong = currentSong;
@@ -179,11 +179,13 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         songPosn -- ;
 
         //Obtener el ID
-        if(songPosn < songs.size()){
+       // if(songPosn < songs.size()){
+
         newSong = currSong.getID() - songPosn;
-        }else {
-            newSong = currSong.getID();
-        }
+
+     //   }else {
+         //   newSong = currSong.getID();
+     //   }
 
         //Obtener el Uri de la canción (almacenada en la memoria externa).
         Uri trackUri = ContentUris.withAppendedId(
@@ -192,12 +194,15 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
         try{
             player.setDataSource(getApplicationContext(), trackUri);
+            player.prepare();
+            player.start();
         }
         catch(Exception e){
             Log.e("MUSIC SERVICE", "Error setting data source", e);
         }
 
-        player.prepareAsync(); //Reproducimos la canción a través de Async (segundo plano)
+      //  player.prepareAsync(); //Reproducimos la canción a través de Async (segundo plano)
+
 
     }
 
@@ -216,13 +221,13 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         }
         else{
             songPosn++;
-            if(songPosn < songs.size()) {
+      //      if(songPosn < songs.size()) {
 
                 //Obtener el ID
                  newSong = currSong.getID() + songPosn;
-            }else {
-                newSong = currSong.getID();
-            }
+        //    }else {
+          //      newSong = currSong.getID();
+      //     }
         }
         //Obtener el Uri de la canción (almacenada en la memoria externa).
         Uri trackUri = ContentUris.withAppendedId(
@@ -231,12 +236,15 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
         try{
             player.setDataSource(getApplicationContext(), trackUri);
+            player.prepare();
+            player.start();
         }
         catch(Exception e){
             Log.e("MUSIC SERVICE", "Error setting data source", e);
         }
 
-        player.prepareAsync(); //Reproducimos la canción a través de Async (segundo plano)
+       // player.prepareAsync(); //Reproducimos la canción a través de Async (segundo plano)
+
     }
 
     public int getPosn(){

@@ -133,7 +133,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
                 song = songList.get(position); //La posición nos dice la canción escogida
 
-                musicSrv.setSong(song, position); //Establecemos la canción y el music service sabe ir a la anterior y la posterior.
+                musicSrv.setSong(song, song.getID()); //Establecemos la canción y el music service sabe ir a la anterior y la posterior.
 
                 // Requerimos el audiofocus para poder reproducir la canción si podemos
 
