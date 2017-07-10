@@ -31,10 +31,14 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     //Título canción
     private String songTitle="";
+
     private static final int NOTIFY_ID=1;
 
     //media player
     private MediaPlayer player;
+
+    private int duration;
+
     //Lista de canciones
     private ArrayList<Song> songs;
     //posición actual de la canción
@@ -158,6 +162,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
         //Comenzamos la reprodución.
         mp.start();
+        duration = player.getDuration();
 
 
     }
@@ -252,7 +257,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     public int getDur(){
-        return player.getDuration();
+        return duration; //duration = player.getDuration();
     }
 
     public boolean isPng(){
