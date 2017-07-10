@@ -184,13 +184,13 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         songPosn -- ;
 
         //Obtener el ID
-       // if(songPosn < songs.size()){
+       if(songPosn < songs.size()){
 
         newSong = currSong.getID() - songPosn;
 
-     //   }else {
-         //   newSong = currSong.getID();
-     //   }
+       }else {
+            newSong = currSong.getID();
+        }
 
         //Obtener el Uri de la canción (almacenada en la memoria externa).
         Uri trackUri = ContentUris.withAppendedId(
@@ -226,13 +226,13 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         }
         else{
             songPosn++;
-      //      if(songPosn < songs.size()) {
+           if(songPosn < songs.size()) {
 
-                //Obtener el ID
+             //   Obtener el ID
                  newSong = currSong.getID() + songPosn;
-        //    }else {
-          //      newSong = currSong.getID();
-      //     }
+            }else {
+               newSong = currSong.getID();
+           }
         }
         //Obtener el Uri de la canción (almacenada en la memoria externa).
         Uri trackUri = ContentUris.withAppendedId(
