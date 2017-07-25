@@ -12,6 +12,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -25,43 +26,48 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     //Para modo aleatorio
 
-    private boolean shuffle=false;
+    private boolean shuffle=false; //Para reproducir en modo aleatorio
 
-    private Random rand;
+    private Random rand; //Número aleatorio que nos dará la canción que debemos reproducir
 
     //Título canción
-    private String songTitle="";
+    private String songTitle=""; //Título canción para la barra de notificación del móvil
 
-    private static final int NOTIFY_ID=1;
+    private static final int NOTIFY_ID = 1; //Para la notificación en la barra superior del móvil
 
     //media player
-    private MediaPlayer player;
+    private MediaPlayer player; //Nuestro reproductor
 
-    private int duration;
+    private int duration; //Duración de la canción
 
     //Lista de canciones
-    private ArrayList<Song> songs;
+    private ArrayList<Song> songs; //Lista con las canciones
+
     //posición actual de la canción
-    private long songPosn;
+    private int songPosn; //Nos dice la posición en el array de canciones anterior
 
-    private Song currSong;
+    private Song currSong; //La canción de reproducción al pulsar directamente sobre una de la lista
 
-    private final IBinder musicBind = new MusicBinder();
+    private final IBinder musicBind = new MusicBinder(); //Enlace entre el servicio de medioPlayer y la aplicación
 
-    public void onCreate(){
+    Notification.Builder builder = new Notification.Builder(this); //Para las notificaciones
+
+    public void onCreate() {
         //creamos el servicio
         super.onCreate();
-    //Iniciamos la posición de la canción en 0
-        songPosn=0;
-    //Creamos el reproductor.
+        //Iniciamos la posición de la canción en 0
+        songPosn = 0;
+        //Creamos el reproductor.
         player = new MediaPlayer();
 
         //Iniciamos el reproductor
         initMusicPlayer();
 
         //Variable aleatoria para el modo aleatorio
-        rand=new Random();
+        rand = new Random();
+    }
 
+        public void notification(){
 
         //Devolver al usuario a la main activity
         Intent notIntent = new Intent(this, MainActivity.class);
@@ -69,18 +75,16 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         PendingIntent pendInt = PendingIntent.getActivity(this, 0,
                 notIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        Notification.Builder builder = new Notification.Builder(this);
-
         builder.setContentIntent(pendInt)
                 .setSmallIcon(R.drawable.android_music_player_play)
                 .setTicker(songTitle)
                 .setOngoing(true)
                 .setContentTitle(getResources().getString(R.string.playing))
                 .setContentText(songTitle);
-        Notification not = builder.build();
+        Notification not = builder.build(); //Enviar la notificación.
 
-        startForeground(NOTIFY_ID, not);
-    }
+        startForeground(NOTIFY_ID, not);}
+
 
 
     @Override
@@ -108,41 +112,6 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         player.setOnErrorListener(this); //y cuando se produce un error.
     }
 
-    //Pasamos la lista de canciones desde la actividad principal
-
-    public void setList(ArrayList<Song> theSongs){
-        songs=theSongs;
-    }
-
-    public class MusicBinder extends Binder {
-        MusicService getService() {
-            return MusicService.this;
-        }
-    }
-
-    public void playSong(Song song){
-        //Reiniciar y Reproducir canción actual
-        player.reset();
-
-        //Obtener el título de la canción
-        songTitle = song.getTitle();
-
-        //Obtener el ID
-        long currSong = song.getID();
-        //Obtener el Uri de la canción (almacenada en la memoria externa).
-        Uri trackUri = ContentUris.withAppendedId(
-                android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                currSong);
-        try{
-            player.setDataSource(getApplicationContext(), trackUri);
-        }
-        catch(Exception e){
-            Log.e("MUSIC SERVICE", "Error setting data source", e);
-        }
-
-        player.prepareAsync(); //Reproducimos la canción a través de Async (segundo plano)
-    }
-
     @Override
     public void onCompletion(MediaPlayer mp) {
         if(player.getCurrentPosition()!=0){
@@ -167,12 +136,54 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     }
 
-    public void setSong(Song currentSong, long songIndex){
+    public void setSong(Song currentSong, int songPosition){
 
-        songPosn = (long) songIndex;
+        songPosn = songPosition;
         currSong = currentSong;
 
     }
+
+    //Pasamos la lista de canciones desde la actividad principal
+
+    public void setList(ArrayList<Song> theSongs){
+        songs=theSongs;
+    }
+
+    public class MusicBinder extends Binder {
+        MusicService getService() {
+            return MusicService.this;
+        }
+    }
+
+    public void playSong(Song song){
+
+        //Reiniciar y Reproducir canción actual
+        player.reset();
+
+        //Obtener el título de la canción
+        songTitle = song.getTitle();
+
+        notification();
+
+        //Obtener el ID
+        long currSongID = song.getID();
+        //Obtener el Uri de la canción (almacenada en la memoria externa).
+        Uri trackUri = ContentUris.withAppendedId(
+                android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                currSongID);
+        try{
+            player.setDataSource(getApplicationContext(), trackUri);
+            Toast.makeText(this,songTitle ,
+                    Toast.LENGTH_LONG).show();
+        }
+        catch(Exception e){
+            Log.e("MUSIC SERVICE", "Error setting data source", e);
+        }
+
+        player.prepareAsync(); //Reproducimos la canción a través de Async (segundo plano)
+    }
+
+
 
     //Metodo para ir a la canción anterior
     public void playPrev(){
@@ -181,21 +192,27 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
         long newSong = 0;
 
-        songPosn -- ;
 
-        //Obtener el ID
-       if(songPosn < songs.size()){
+       if(songPosn > 0){
 
-        newSong = currSong.getID() - songPosn;
+           songPosn = songPosn - 1;
 
-       }else {
-            newSong = currSong.getID();
-        }
+           //Obtener el ID
+        newSong = songs.get(songPosn).getID();
+
+           //Obtener el título de la canción
+           songTitle = songs.get(songPosn).getTitle();
+
+       }
 
         //Obtener el Uri de la canción (almacenada en la memoria externa).
         Uri trackUri = ContentUris.withAppendedId(
                 android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 newSong);
+        Toast.makeText(this,songTitle,
+                Toast.LENGTH_LONG).show();
+
+        notification();
 
         try{
             player.setDataSource(getApplicationContext(), trackUri);
@@ -205,9 +222,6 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         catch(Exception e){
             Log.e("MUSIC SERVICE", "Error setting data source", e);
         }
-
-      //  player.prepareAsync(); //Reproducimos la canción a través de Async (segundo plano)
-
 
     }
 
@@ -219,25 +233,33 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         long newSong = 0;
 
         if(shuffle /*Si el modo aleatorio está encendido*/){
-            while(currSong.getID() == songPosn){
+            newSong = currSong.getID();
+            while(newSong == currSong.getID()){
+                int randomPosition = rand.nextInt(songs.size());
 
-                 newSong = (long) rand.nextInt(songs.size());
+                newSong = songs.get(randomPosition).getID();
             }
         }
         else{
-            songPosn++;
+            songPosn = songPosn + 1 ;
            if(songPosn < songs.size()) {
 
              //   Obtener el ID
-                 newSong = currSong.getID() + songPosn;
-            }else {
-               newSong = currSong.getID();
-           }
+                 newSong = songs.get(songPosn).getID();
+            }
         }
+
+        //Obtener el título de la canción
+        songTitle = songs.get(songPosn).getTitle();
+
         //Obtener el Uri de la canción (almacenada en la memoria externa).
         Uri trackUri = ContentUris.withAppendedId(
                 android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 newSong);
+        Toast.makeText(this,songTitle,
+                Toast.LENGTH_LONG).show();
+
+        notification();
 
         try{
             player.setDataSource(getApplicationContext(), trackUri);
@@ -257,7 +279,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     public int getDur(){
-        return duration; //duration = player.getDuration();
+        return duration;
     }
 
     public boolean isPng(){

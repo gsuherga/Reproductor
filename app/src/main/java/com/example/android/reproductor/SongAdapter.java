@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
-import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -69,50 +68,14 @@ public class SongAdapter extends BaseAdapter {
 
         if(data != null) {
             Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-            coverArt.setImageBitmap(bitmap); //associated cover art in bitmap
+            coverArt.setImageBitmap(bitmap); //la portada se asocia al bitmap que hemos obtenido
             coverArt.setAdjustViewBounds(true);
         }else  {
-            coverArt.setImageResource(R.drawable.vinilo); //any default cover resourse folder
+            coverArt.setImageResource(R.drawable.vinilo); //si no hay portada ponemos esta foto por defecto
             coverArt.setAdjustViewBounds(true);
         }
-
-
-
-        //establecemos como equiteta según la posición en el adapter
+        //establecemos como etiqueta según la posición en el adapter
         songLay.setTag(position);
         return songLay;
-    }
-
-    private class DownloadImages extends AsyncTask<MediaMetadataRetriever, Void, byte[]> {
-
-
-        @Override
-        protected byte[] doInBackground(MediaMetadataRetriever... strings) {
-
-
-            if (strings[0].getEmbeddedPicture() != null) {
-                return strings[0].getEmbeddedPicture();
-
-            }
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(byte[] bitmap) {
-            super.onPostExecute(bitmap);
-            anInterface.getBitmap(bitmap);
-        }
-
-
-        private finishedInterface anInterface;
-
-        public void setFinishedDownload(finishedInterface finishedInterface) {
-            this.anInterface = finishedInterface;
-        }
-    }
-
-    public interface finishedInterface {
-        public void getBitmap(byte[] bitmap);
     }
 }

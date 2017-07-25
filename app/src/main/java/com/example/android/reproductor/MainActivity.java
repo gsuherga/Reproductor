@@ -32,25 +32,21 @@ import java.util.Comparator;
 
 public class MainActivity extends AppCompatActivity implements MediaPlayerControl {
 
-    ArrayList<Song> songList = new ArrayList<>();
+    ArrayList<Song> songList = new ArrayList<>(); //La lista de canciones desde el adapter
 
-    ListView songView;
+    ListView songView; //Vista donde irán las canciones
 
-    private MusicService musicSrv;
+    private MusicService musicSrv; //Variable de musicService para reproducir y manejar las canciones en el reproductor
 
-    private Intent playIntent;
+    private Intent playIntent; //Enlace entre la main activity de nuestra aplicación el servicio de música (MusicService)
 
-    private boolean musicBound = false;
+    private boolean musicBound = false; //Controla si se ha establecido conexión entre esta activity y la del MusicService
 
-    private MusicController controller;
+    private MusicController controller; //Contrlador de mediaplayer
 
-    private boolean paused = false, playbackPaused = false;
+    private boolean paused = true, playbackPaused = false; //Variables para controlar la pausa en la reproducción
 
-    Song song;
-
-    /**
-     * Handles audio focus when playing a sound file
-     */
+    Song song; //Variable para canción (actual)
 
     private AudioManager mAudioManager; //Variable de enlace con el audiofocus
 
@@ -66,13 +62,16 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                 // The AUDIOFOCUS_LOSS_TRANSIENT case means that we've lost audio focus for a
                 // short amount of time. The AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK case means that
                 // our app is allowed to continue playing sound but at a lower volume.
+
+                // Si perdemos audifocus por un corto tiempo (AUDIOFOCUS_LOSS_TRANSIENT) o si
+                // podemos reproducir pero a menor volumen (UDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK)
+                // preferimos pausar la reproducción
                 pause();
             } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
-                // The AUDIOFOCUS_GAIN case means we have regained focus and can resume playback.
+                //Obtenemos audifocus nuevamente: retomamos la reproducción
               onResume();
             } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
-                // The AUDIOFOCUS_LOSS case means we've lost audio focus and
-                // Stop playback and clean up resources
+            //Si perdemos totalmente el audiofoucus paramos y liberamos el mediaplayer.
                 releaseMediaPlayer();
             }
         }
@@ -91,9 +90,6 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
                 requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
 
-                // MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE is an
-                // app-defined int constant
-
                 return;
             }
         }
@@ -106,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
         getSongList();
 
-        //Ordenamos las canciones por Artista
+        //Ordenamos las canciones por Artista y dentro del aritsta por album
         Collections.sort(songList, new Comparator<Song>() {
             public int compare(Song a, Song b) {
                 return a.getArtist().compareTo(b.getArtist());
@@ -117,11 +113,8 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         SongAdapter songAdt = new SongAdapter(this, songList);
         songView.setAdapter(songAdt);
 
-
         //Contexto para luego pasarlo al audiofocus
         context=this;
-
-
 
         songView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -133,9 +126,9 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
                 song = songList.get(position); //La posición nos dice la canción escogida
 
-                musicSrv.setSong(song, song.getID()); //Establecemos la canción y el music service sabe ir a la anterior y la posterior.
+                musicSrv.setSong(song, position); //Establecemos la canción y el music service sabe ir a la anterior y la posterior.
 
-                // Requerimos el audiofocus para poder reproducir la canción si podemos
+                // Requerimos el audiofocus para poder reproducir la canción si nos lo permite
 
                 int result = mAudioManager.requestAudioFocus(mOnAudioFocusChangeListener,
                         AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
@@ -156,8 +149,6 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     }
 
     public void songPicked(Song song) {
-      //  Log.e(view.getTag().toString(), "view.getTag().toString()")
-        // musicSrv.setSong(Integer.parseInt(song.getID()));
         musicSrv.playSong(song);
 
         if (playbackPaused) {
@@ -188,6 +179,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     };
 
     private void setController() {
+
         //establecer el controlador
         controller = new MusicController(this);
 
@@ -238,7 +230,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     @Override
     public void start() {
         musicSrv.go();
-    }
+            }
 
 
     @Override
@@ -365,8 +357,11 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
     //Reproducir la siguiente
     private void playNext() {
+
         musicSrv.playNext();
+
         if (playbackPaused) {
+
             setController();
             playbackPaused = false;
         }
@@ -405,20 +400,19 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     }
 
     /**
-     * Clean up the media player by releasing its resources.
+     * Limpiar el mediaPlayer.
      */
     public void releaseMediaPlayer() {
         // If the media player is not null, then it may be currently playing a sound.
+        //Si el mediaPlayer no está vacio, puede estar reproduciendo sonido.
         if (musicSrv != null) {
             // Regardless of the current state of the media player, release its resources
             // because we no longer need it.
+
+            //A pesar de su estado actual, liberar sus recursos porque no los necesitamos más.
             musicSrv.release();
-            // Set the media player back to null. For our code, we've decided that
-            // setting the media player to null is an easy way to tell that the media player
-            // is not configured to play an audio file at the moment.
+            //Establecer el reproductor mediaplayer en vació (null) y  abandonar el audiofocus.
             musicSrv = null;
-            // Regardless of whether or not we were granted audio focus, abandon it. This also
-            // unregisters the AudioFocusChangeListener so we don't get anymore callbacks.
             mAudioManager.abandonAudioFocus(mOnAudioFocusChangeListener);
         }
 
