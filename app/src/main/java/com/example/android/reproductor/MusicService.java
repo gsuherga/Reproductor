@@ -233,12 +233,17 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         long newSong = 0;
 
         if(shuffle /*Si el modo aleatorio está encendido*/){
-            newSong = currSong.getID();
-            while(newSong == currSong.getID()){
-                int randomPosition = rand.nextInt(songs.size());
 
-                newSong = songs.get(randomPosition).getID();
+            int randomPosition = songPosn;
+
+            while(randomPosition == songPosn /*La canción tiene que ser distinta de la actual)*/ ){
+
+                randomPosition = rand.nextInt(songs.size());
             }
+
+            newSong = songs.get(randomPosition).getID();
+            //Obtener el título de la canción
+            songTitle = songs.get(randomPosition).getTitle();
         }
         else{
             songPosn = songPosn + 1 ;
@@ -246,11 +251,10 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
              //   Obtener el ID
                  newSong = songs.get(songPosn).getID();
+               //Obtener el título de la canción
+               songTitle = songs.get(songPosn).getTitle();
             }
         }
-
-        //Obtener el título de la canción
-        songTitle = songs.get(songPosn).getTitle();
 
         //Obtener el Uri de la canción (almacenada en la memoria externa).
         Uri trackUri = ContentUris.withAppendedId(
@@ -304,8 +308,12 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     public void setShuffle(){
-        if(shuffle) shuffle=false;
-        else shuffle=true;
+        if(shuffle) {
+            shuffle=false;
+        }
+        else {
+            shuffle = true;
+        }
     }
 
     public void release(){

@@ -59,17 +59,13 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         public void onAudioFocusChange(int focusChange) {
             if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT ||
                     focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
-                // The AUDIOFOCUS_LOSS_TRANSIENT case means that we've lost audio focus for a
-                // short amount of time. The AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK case means that
-                // our app is allowed to continue playing sound but at a lower volume.
-
                 // Si perdemos audifocus por un corto tiempo (AUDIOFOCUS_LOSS_TRANSIENT) o si
                 // podemos reproducir pero a menor volumen (UDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK)
                 // preferimos pausar la reproducción
                 pause();
             } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
                 //Obtenemos audifocus nuevamente: retomamos la reproducción
-              onResume();
+                start();
             } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
             //Si perdemos totalmente el audiofoucus paramos y liberamos el mediaplayer.
                 releaseMediaPlayer();
@@ -378,12 +374,14 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         controller.show(0);
     }
 
+    //OnPause si la aplicación sale de la aplicación sin cerrarla
     @Override
     protected void onPause() {
         super.onPause();
         paused = true;
     }
 
+    //Si el uusario vuelve a la aplicación, que aún estaba ejecutándose
     @Override
     protected void onResume() {//Para reiniciar la reproducción
         super.onResume();
@@ -393,10 +391,12 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         }
     }
 
+    //Al salir de la aplicación:
     @Override
     protected void onStop() {
         controller.hide();
         super.onStop();
+        releaseMediaPlayer();
     }
 
     /**
