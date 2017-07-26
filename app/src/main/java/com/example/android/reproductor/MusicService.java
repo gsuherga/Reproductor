@@ -131,7 +131,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         mp.start();
         duration = player.getDuration();
 
-
+        notification();
     }
 
     public void setSong(int songPosition){
