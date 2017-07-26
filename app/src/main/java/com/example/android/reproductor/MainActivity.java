@@ -98,10 +98,10 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
         getSongList();
 
-        //Ordenamos las canciones por Artista y dentro del aritsta por album
+        //Ordenamos las canciones por Album
         Collections.sort(songList, new Comparator<Song>() {
             public int compare(Song a, Song b) {
-                return a.getArtist().compareTo(b.getArtist());
+                return a.getAlbum().compareTo(b.getAlbum());
             }
         });
 
@@ -293,6 +293,10 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                 (android.provider.MediaStore.Audio.Media._ID); //ID de la canción
         int artistColumn = musicCursor.getColumnIndex
                 (android.provider.MediaStore.Audio.Media.ARTIST); //Artista
+        int album = musicCursor.getColumnIndex
+                (MediaStore.Audio.Media.ALBUM); //Artista
+        int tracknumber = musicCursor.getColumnIndex
+                (MediaStore.Audio.Media.TRACK); //Artista
 
         int album_data = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA); //Datos del album
 
@@ -304,10 +308,11 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                 long thisId = musicCursor.getLong(idColumn);
                 String thisTitle = musicCursor.getString(titleColumn);
                 String thisArtist = musicCursor.getString(artistColumn);
-                // String thisAlbum = musicCursor.getString(album); //Esto es para obtener el título del album, no la foto
+                String thisAlbum = musicCursor.getString(album); //Esto es para obtener el título del album, no la foto
                 String thisData = musicCursor.getString(album_data);
+                String thistrack = musicCursor.getString(tracknumber);
                 metadataRetriever.setDataSource(thisData);
-                songList.add(new Song(thisId, thisTitle, thisArtist, thisData));
+                songList.add(new Song(thisId, thisTitle, thisAlbum, thistrack, thisArtist, thisData));
 
                 //añadimos la canción a la lista
             } while (musicCursor.moveToNext()); //Mientras que haya canciones volveremos a ejecutar el bucle

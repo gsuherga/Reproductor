@@ -16,13 +16,19 @@ public class Song {
 
     private String fotoDisco;
 
+    private String albumTitle;
+
+    private String trackNumber;
+
 
     //Creamos un método para así poder extraer luego los metadatos de las canciones
 
-        public Song(long songID, String songTitle, String songArtist, String data) {
+        public Song(long songID, String songTitle, String Album, String track, String songArtist, String data) {
         id=songID;
         title=songTitle;
+        albumTitle = Album;
         artist=songArtist;
+        trackNumber = track;
         fotoDisco = data;
     }
 
@@ -34,6 +40,11 @@ public class Song {
     public String getData(){
         return fotoDisco;
     }
+    public String getAlbum(){
+        return albumTitle;
+    }
+    public String getTrackNumber(){
+        return trackNumber;}
 
 
 
