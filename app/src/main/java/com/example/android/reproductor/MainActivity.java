@@ -28,6 +28,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
+
+/*
+
+This app was made with help specially of this guide found in internet:
+
+https://code.tutsplus.com/es/tutorials/create-a-music-player-on-android-project-setup--mobile-22764
+
+ */
+
 //Implementamos la clase MediaController para poder así reproducir los archivos de música
 
 public class MainActivity extends AppCompatActivity implements MediaPlayerControl {
@@ -122,7 +131,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
                 song = songList.get(position); //La posición nos dice la canción escogida
 
-                musicSrv.setSong(song, position); //Establecemos la canción y el music service sabe ir a la anterior y la posterior.
+                musicSrv.setSong(position); //Establecemos la canción y el music service sabe ir a la anterior y la posterior.
 
                 // Requerimos el audiofocus para poder reproducir la canción si nos lo permite
 

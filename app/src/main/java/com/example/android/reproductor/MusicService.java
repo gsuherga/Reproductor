@@ -46,8 +46,6 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     //posición actual de la canción
     private int songPosn; //Nos dice la posición en el array de canciones anterior
 
-    private Song currSong; //La canción de reproducción al pulsar directamente sobre una de la lista
-
     private final IBinder musicBind = new MusicBinder(); //Enlace entre el servicio de medioPlayer y la aplicación
 
     Notification.Builder builder = new Notification.Builder(this); //Para las notificaciones
@@ -136,10 +134,9 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     }
 
-    public void setSong(Song currentSong, int songPosition){
+    public void setSong(int songPosition){
 
         songPosn = songPosition;
-        currSong = currentSong;
 
     }
 
