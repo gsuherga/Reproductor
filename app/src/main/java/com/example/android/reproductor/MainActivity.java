@@ -279,7 +279,6 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     }
 
     public void getSongList() {
-        //retrieve Song info
 
         ContentResolver musicResolver = getContentResolver();
         Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
@@ -348,7 +347,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         return super.onOptionsItemSelected(item);
     }
 
-    //Salir de la aplicación no detendrá la música
+    //Salir de la aplicación detendrá la música
     @Override
     protected void onDestroy() {
         stopService(playIntent);
