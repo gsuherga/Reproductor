@@ -51,9 +51,9 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
     private boolean musicBound = false; //Controla si se ha establecido conexión entre esta activity y la del MusicService
 
-    private MusicController controller; //Contrlador de mediaplayer
+    private MusicController controller; //Controlador de mediaplayer
 
-    private boolean paused = true, playbackPaused = false; //Variables para controlar la pausa en la reproducción
+    private boolean paused = false, playbackPaused = false; //Variables para controlar la pausa en la reproducción
 
     Song song; //Variable para canción (actual)
 
@@ -210,7 +210,6 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
     @Override
     public void onStart() {
-
         super.onStart();
         if (playIntent == null) {
             playIntent = new Intent(this, MusicService.class);
@@ -396,7 +395,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
     //Si el uusario vuelve a la aplicación, que aún estaba ejecutándose
     @Override
-    protected void onResume() {//Para reiniciar la reproducción
+    protected void onResume() {//Para reiniciar la aplicación
         super.onResume();
         if (paused) {
             setController();
