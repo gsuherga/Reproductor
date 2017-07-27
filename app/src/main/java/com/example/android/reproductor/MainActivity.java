@@ -233,6 +233,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
     @Override
     public void start() {
+        seekTo(getCurrentPosition());
         musicSrv.go();
             }
 
