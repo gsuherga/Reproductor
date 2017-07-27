@@ -144,55 +144,13 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
                     songPicked(song);
                 }
+
             }
         });
 
         //establecemos el controlador (método setController)
 
         setController();
-    }
-
-    public void getSongList() {
-
-        ContentResolver musicResolver = getContentResolver();
-        Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        Cursor musicCursor = musicResolver.query(musicUri, null, null, null, null);
-        //Usando el cursor vamos añadiendo las canciones que haya en el teléfono
-
-        //Obtenemos los datos desde los archivos
-        int titleColumn = musicCursor.getColumnIndex
-                (android.provider.MediaStore.Audio.Media.TITLE); //Título de la canción
-        int idColumn = musicCursor.getColumnIndex
-                (android.provider.MediaStore.Audio.Media._ID); //ID de la canción
-        int artistColumn = musicCursor.getColumnIndex
-                (android.provider.MediaStore.Audio.Media.ARTIST); //Artista
-        int album = musicCursor.getColumnIndex
-                (MediaStore.Audio.Media.ALBUM); //Artista
-        int tracknumber = musicCursor.getColumnIndex
-                (MediaStore.Audio.Media.TRACK); //Artista
-
-        int album_data = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA); //Datos del album
-
-        MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever(); //Obtener metadatos
-
-        if(musicCursor!=null && musicCursor.moveToFirst()){
-            //Añadimos canciones a la lista
-            do { // pasamos a String los datos que hemos obtenido justo arriba
-                long thisId = musicCursor.getLong(idColumn);
-                String thisTitle = musicCursor.getString(titleColumn);
-                String thisArtist = musicCursor.getString(artistColumn);
-                String thisAlbum = musicCursor.getString(album); //Esto es para obtener el título del album, no la foto
-                String thisData = musicCursor.getString(album_data);
-                String thistrack = musicCursor.getString(tracknumber);
-                metadataRetriever.setDataSource(thisData);
-                songList.add(new Song(thisId, thisTitle, thisAlbum, thistrack, thisArtist, thisData));
-
-                //añadimos la canción a la lista
-            } while (musicCursor.moveToNext()); //Mientras que haya canciones volveremos a ejecutar el bucle
-
-        }
-
-        musicCursor.close();
     }
 
     public void songPicked(Song song) {
@@ -328,7 +286,48 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         return 0;
     }
 
+    public void getSongList() {
 
+        ContentResolver musicResolver = getContentResolver();
+        Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        Cursor musicCursor = musicResolver.query(musicUri, null, null, null, null);
+        //Usando el cursor vamos añadiendo las canciones que haya en el teléfono
+
+        //Obtenemos los datos desde los archivos
+        int titleColumn = musicCursor.getColumnIndex
+                (android.provider.MediaStore.Audio.Media.TITLE); //Título de la canción
+        int idColumn = musicCursor.getColumnIndex
+                (android.provider.MediaStore.Audio.Media._ID); //ID de la canción
+        int artistColumn = musicCursor.getColumnIndex
+                (android.provider.MediaStore.Audio.Media.ARTIST); //Artista
+        int album = musicCursor.getColumnIndex
+                (MediaStore.Audio.Media.ALBUM); //Artista
+        int tracknumber = musicCursor.getColumnIndex
+                (MediaStore.Audio.Media.TRACK); //Artista
+
+        int album_data = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA); //Datos del album
+
+        MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever(); //Obtener metadatos
+
+        if(musicCursor!=null && musicCursor.moveToFirst()){
+            //Añadimos canciones a la lista
+            do { // pasamos a String los datos que hemos obtenido justo arriba
+                long thisId = musicCursor.getLong(idColumn);
+                String thisTitle = musicCursor.getString(titleColumn);
+                String thisArtist = musicCursor.getString(artistColumn);
+                String thisAlbum = musicCursor.getString(album); //Esto es para obtener el título del album, no la foto
+                String thisData = musicCursor.getString(album_data);
+                String thistrack = musicCursor.getString(tracknumber);
+                metadataRetriever.setDataSource(thisData);
+                songList.add(new Song(thisId, thisTitle, thisAlbum, thistrack, thisArtist, thisData));
+
+                //añadimos la canción a la lista
+            } while (musicCursor.moveToNext()); //Mientras que haya canciones volveremos a ejecutar el bucle
+
+        }
+
+        musicCursor.close();
+    }
 
 
     @Override
@@ -359,9 +358,10 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     //Salir de la aplicación detendrá la música
     @Override
     protected void onDestroy() {
-        super.onDestroy();
         stopService(playIntent);
+        unbindService(musicConnection);
         musicSrv = null;
+        super.onDestroy();
     }
 
     //Reproducir la siguiente
@@ -391,9 +391,8 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     @Override
     protected void onPause() {
         super.onPause();
-        musicSrv.onUnbind(playIntent);
-        musicSrv = null;
         paused = true;
+        bindService(new Intent(this, MusicService.class), musicConnection, BIND_AUTO_CREATE);
     }
 
     //Si el uusario vuelve a la aplicación, que aún estaba ejecutándose
